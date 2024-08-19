@@ -2,3 +2,5 @@ fastapi
 httpx
 pytest
 pytest-cov
+pydantic
+typing

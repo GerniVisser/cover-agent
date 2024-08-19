@@ -5,19 +5,14 @@ Cover Agent consists of many classes but the fundamental flow lives within the C
 sequenceDiagram
     participant User
     participant CoverAgent
-    participant CustomLogger
     participant UnitTestGenerator
     participant CoverageProcessor
     participant AICaller
     participant PromptBuilder
 
     User->>CoverAgent: Initialize with args
-    CoverAgent->>CustomLogger: Get logger instance
-    CoverAgent->>CoverAgent: _validate_paths()
-    CoverAgent->>CoverAgent: _duplicate_test_file()
     CoverAgent->>UnitTestGenerator: Initialize UnitTestGenerator
     UnitTestGenerator->>AICaller: Initialize AICaller
-    UnitTestGenerator->>CustomLogger: Get logger instance
     UnitTestGenerator->>CoverageProcessor: run_coverage()
     CoverageProcessor-->>UnitTestGenerator: Return coverage metrics
 

@@ -52,7 +52,7 @@ class AICaller:
 
         # API base exception for OpenAI Compatible, Ollama and Hugging Face models
         if (
-            "ollama" in self.model
+            "ollama/llama3" in self.model
             or "huggingface" in self.model
             or self.model.startswith("openai/")
         ):
