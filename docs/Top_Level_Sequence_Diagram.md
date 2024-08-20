@@ -17,34 +17,6 @@ sequenceDiagram
     CoverageProcessor-->>UnitTestGenerator: Return coverage metrics
 
     CoverAgent->>UnitTestGenerator: initial_test_suite_analysis()
-    
-    loop Analyze test suite headers indentation
-        UnitTestGenerator->>PromptBuilder: build_prompt_custom(analyze_suite_test_headers_indentation)
-        PromptBuilder-->>UnitTestGenerator: Return prompt
-        note right of UnitTestGenerator: Request in prompt: <br/>1. Programming language of the test file <br/>2. Testing framework needed to run tests <br/>3. Number of tests in the file <br/>4. Indentation of the test headers
-        PromptBuilder-->>AICaller: Construct and return full prompt
-        UnitTestGenerator->>AICaller: Call model with prompt
-        note right of AICaller: Analyze test file and provide YAML object with: <br />1. Programming language <br />2. Testing framework <br />3. Number of tests <br />4. Indentation of the test headers
-        AICaller-->>UnitTestGenerator: Return analysis results
-        UnitTestGenerator->>UnitTestGenerator: Parse YAML response
-        UnitTestGenerator->>UnitTestGenerator: Extract test_headers_indentation
-        note right of UnitTestGenerator: Store test_headers_indentation
-    end
-
-    loop Analyze test insert lines
-        UnitTestGenerator->>PromptBuilder: build_prompt_custom(analyze_suite_test_insert_line)
-        PromptBuilder-->>UnitTestGenerator: Return prompt
-        note right of UnitTestGenerator: Request in prompt: <br/>1. Programming language of the test file <br/>2. Testing framework needed to run tests <br/>3. Number of tests in the file <br/>4. Line number to insert new tests <br/>5. Line number to insert new imports
-        PromptBuilder-->>AICaller: Construct and return full prompt
-        UnitTestGenerator->>AICaller: Call model with prompt
-        note right of AICaller: Analyze test file and provide YAML object with: <br />1. Programming language <br />2. Testing framework <br />3. Number of tests <br />4. Relevant line number to insert tests <br />5. Relevant line number to insert imports
-        AICaller-->>UnitTestGenerator: Return analysis results
-        note right of UnitTestGenerator: Process analysis results
-        UnitTestGenerator->>UnitTestGenerator: Parse YAML response
-        UnitTestGenerator->>UnitTestGenerator: Extract relevant_line_number_to_insert_tests_after
-        UnitTestGenerator->>UnitTestGenerator: Extract relevant_line_number_to_insert_imports_after
-        note right of UnitTestGenerator: Store relevant_line_numbers
-    end
 
     loop Test generation and validation
         CoverAgent->>UnitTestGenerator: generate_tests()
@@ -72,6 +44,5 @@ sequenceDiagram
         end
     end
 
-    CoverAgent->>CustomLogger: Log final results
     note right of CoverAgent: Generate report
 ```

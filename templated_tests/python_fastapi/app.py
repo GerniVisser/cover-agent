@@ -1,82 +1,181 @@
+from fastapi import FastAPI, HTTPException, Query
+from datetime import date, datetime, timedelta
+from typing import List, Optional
 
-import unittest
-from fastapi.testclient import TestClient
-from main import app, Item, User
+app = FastAPI()
 
-client = TestClient(app)
+@app.get("/")
+async def root():
+    """
+    A simple function that serves as the root endpoint for the FastAPI application.
+    Returns a dictionary with a welcome message.
+    """
+    return {"message": "Welcome to the FastAPI application!"}
 
-class TestFastAPI(unittest.TestCase):
+@app.get("/current-date")
+async def current_date():
+    """
+    Get the current date as an ISO-formatted string.
+    """
+    return {"date": date.today().isoformat()}
+
+@app.get("/add/{num1}/{num2}")
+async def add(num1: int, num2: int):
+    """
+    Adds two numbers and returns the result.
+    """
+    return {"result": num1 + num2}
+
+@app.get("/subtract/{num1}/{num2}")
+async def subtract(num1: int, num2: int):
+    """
+    Subtracts the second number from the first and returns the result.
+    """
+    return {"result": num1 - num2}
+
+@app.get("/multiply/{num1}/{num2}")
+async def multiply(num1: int, num2: int):
+    """
+    Multiplies two numbers and returns the result.
+    """
+    return {"result": num1 * num2}
+
+@app.get("/divide/{num1}/{num2}")
+async def divide(num1: int, num2: int):
+    """
+    Divides the first number by the second and returns the result.
+    Raises an exception if division by zero is attempted.
+    """
+    if num2 == 0:
+        raise HTTPException(status_code=400, detail="Cannot divide by zero")
+    return {"result": num1 / num2}
+
+@app.get("/square/{number}")
+async def square(number: int):
+    """
+    Returns the square of a number.
+    """
+    return {"result": number**2}
+
+@app.get("/is-palindrome/{text}")
+async def is_palindrome(text: str):
+    """
+    Checks if the provided string is a palindrome.
+    """
+    return {"is_palindrome": text == text[::-1]}
+
+@app.get("/days-until-new-year")
+async def days_until_new_year():
+    """
+    Calculates the number of days until the next New Year.
+    """
+    today = date.today()
+    next_new_year = date(today.year + 1, 1, 1)
+    delta = next_new_year - today
+    return {"days_until_new_year": delta.days}
+
+@app.get("/echo/{message}")
+async def echo(message: str):
+    """
+    Returns the same message that is sent to it.
+    """
+    return {"message": message}
+
+@app.post("/reverse-words/")
+async def reverse_words(sentence: str):
+    """
+    Reverses the order of words in the provided sentence.
+    """
+    words = sentence.split()
+    reversed_sentence = " ".join(reversed(words))
+    return {"original": sentence, "reversed": reversed_sentence}
+
+@app.get("/factorial/{number}")
+async def factorial(number: int):
+    """
+    Computes the factorial of a number.
+    """
+    if number < 0:
+        raise HTTPException(status_code=400, detail="Factorial is not defined for negative numbers")
+    fact = 1
+    for i in range(2, number + 1):
+        fact *= i
+    return {"number": number, "factorial": fact}
+
+@app.get("/fibonacci/{n}")
+async def fibonacci(n: int):
+    """
+    Generates the first 'n' numbers of the Fibonacci sequence.
+    """
+    if n < 1:
+        raise HTTPException(status_code=400, detail="The number must be greater than 0")
+    fib_sequence = [0, 1]
+    for i in range(2, n):
+        fib_sequence.append(fib_sequence[-1] + fib_sequence[-2])
+    return {"fibonacci": fib_sequence[:n]}
+
+@app.get("/leap-year/{year}")
+async def leap_year(year: int):
+    """
+    Determines if a given year is a leap year.
+    """
+    is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+    return {"year": year, "is_leap_year": is_leap}
+
+@app.get("/prime-factors/{number}")
+async def prime_factors(number: int):
+    """
+    Returns the prime factors of a given number.
+    """
+    if number <= 1:
+        raise HTTPException(status_code=400, detail="Number must be greater than 1")
     
-    def test_root(self):
-        response = client.get("/")
-        assert response.status_code == 200
-        assert response.json() == {"message": "Welcome to the FastAPI application!"}
+    i = 2
+    factors = []
+    while i * i <= number:
+        if number % i:
+            i += 1
+        else:
+            number //= i
+            factors.append(i)
+    if number > 1:
+        factors.append(number)
+    
+    return {"number": number, "prime_factors": factors}
 
-    def test_random_number_valid(self):
-        response = client.get("/random-number?min=0&max=10")
-        assert response.status_code == 200
-        assert 0 <= response.json()["random_number"] <= 10
+@app.get("/weekday")
+async def get_weekday(date_str: Optional[str] = None):
+    """
+    Returns the day of the week for a given date. If no date is provided, returns the current weekday.
+    """
+    if date_str:
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+    else:
+        date_obj = date.today()
 
-    def test_random_number_min_greater_than_max(self):
-        response = client.get("/random-number?min=10&max=5")
-        assert response.status_code == 400
+    return {"date": date_obj.isoformat(), "weekday": date_obj.strftime("%A")}
 
-    def test_create_item(self):
-        item_data = {"name": "item1", "price": 10.0}
-        response = client.post("/items/", json=item_data)
-        assert response.status_code == 200
-        assert response.json() == {"item": item_data}
+@app.get("/sum-of-list/")
+async def sum_of_list(numbers: List[int] = Query(...)):
+    """
+    Returns the sum of a list of numbers.
+    """
+    return {"numbers": numbers, "sum": sum(numbers)}
 
-    def test_update_item(self):
-        item_data = {"name": "item1", "price": 20.0}
-        response = client.put("/items/1", json=item_data)
-        assert response.status_code == 200
-        assert response.json() == {"item_id": 1, "item": item_data}
+@app.get("/age-calculator/{birthdate}")
+async def age_calculator(birthdate: str):
+    """
+    Calculates the age of a person given their birthdate in YYYY-MM-DD format.
+    """
+    try:
+        birth_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+    
+    today = date.today()
+    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
-    def test_delete_item(self):
-        response = client.delete("/items/1")
-        assert response.status_code == 200
-        assert response.json() == {"message": "Item with id 1 has been deleted"}
-
-    def test_read_users(self):
-        response = client.get("/users/?skip=0&limit=2")
-        assert response.status_code == 200
-        assert len(response.json()) == 2
-
-    def test_create_user(self):
-        user_data = {"username": "user1", "email": "user1@example.com", "password": "password"}
-        response = client.post("/users/", json=user_data)
-        assert response.status_code == 200
-        assert response.json() == {"user": user_data}
-
-    def test_update_user(self):
-        user_data = {"username": "user1", "email": "user1@example.com", "password": "newpassword"}
-        response = client.put("/users/user1", json=user_data)
-        assert response.status_code == 200
-        assert response.json() == {"username": "user1", "user": user_data}
-
-    def test_date_difference(self):
-        response = client.get("/date-difference/?date1=2023-01-01&date2=2023-01-10")
-        assert response.status_code == 200
-        assert response.json() == {"date_difference": 9}
-
-    def test_factorial(self):
-        response = client.get("/factorial/5")
-        assert response.status_code == 200
-        assert response.json() == {"factorial": 120}
-
-    def test_factorial_negative(self):
-        response = client.get("/factorial/-1")
-        assert response.status_code == 400
-
-    def test_prime_factors(self):
-        response = client.get("/prime-factors/28")
-        assert response.status_code == 200
-        assert response.json() == {"prime_factors": [2, 2, 7]}
-
-    def test_prime_factors_invalid(self):
-        response = client.get("/prime-factors/0")
-        assert response.status_code == 400
-
-if __name__ == "__main__":
-    unittest.main()
+    return {"birthdate": birthdate, "age": age}
